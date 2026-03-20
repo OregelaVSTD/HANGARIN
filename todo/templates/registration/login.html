@@ -1,0 +1,70 @@
+{% extends "base_auth.html" %}
+{% load socialaccount %}
+
+{% block content %}
+<section class="auth-card">
+    <div class="auth-card-header">
+        <p class="auth-kicker">Hangarin</p>
+    </div>
+
+    <form method="post" class="auth-form">
+        {% csrf_token %}
+
+        {% if form.errors %}
+            <div class="auth-alert">
+                Invalid email, username, or password. Please try again.
+            </div>
+        {% endif %}
+
+        <div class="auth-field">
+            <label for="id_username">Email or Username</label>
+            <input
+                id="id_username"
+                type="text"
+                name="username"
+                class="form-control auth-input"
+                value="{{ form.username.value|default:'' }}"
+                placeholder="Enter your email or username"
+                autocomplete="username"
+                required
+            >
+        </div>
+
+        <div class="auth-field">
+            <label for="id_password">Password</label>
+            <input
+                id="id_password"
+                type="password"
+                name="password"
+                class="form-control auth-input"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+            >
+        </div>
+
+        {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+
+        <button type="submit" class="btn auth-submit">Sign In</button>
+    </form>
+
+    <div class="auth-divider">
+        <span>Or continue with</span>
+    </div>
+
+    <div class="auth-social-list">
+        {% if google_login_enabled %}
+            {% provider_login_url "google" process="login" as google_login_url %}
+            <a href="{{ google_login_url }}" class="auth-social-button">
+                <span>Continue with Google</span>
+            </a>
+        {% else %}
+            <div class="auth-social-button auth-social-disabled" aria-disabled="true">
+                <span>Continue with Google</span>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

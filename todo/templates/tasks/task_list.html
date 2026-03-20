@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="page-kicker">Task Board</p>
+        <h2>My Hangarin Tasks</h2>
+        <p class="page-subtitle">
+            Review active work, filter by status, and manage notes and deadlines from one clean board.
+        </p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'dashboard' %}" class="btn btn-soft">Open Dashboard</a>
+        <a href="{% url 'create_task' %}" class="btn btn-primary-soft">Add New Task</a>
+    </div>
+</section>
+
+<section class="metrics-grid">
+    <article class="metric-card metric-card-primary surface-card">
+        <p class="metric-label">Total Tasks</p>
+        <p class="metric-value">{{ summary.total }}</p>
+        <p class="metric-meta">Your full task inventory.</p>
+    </article>
+    <article class="metric-card metric-card-warning surface-card">
+        <p class="metric-label">Pending</p>
+        <p class="metric-value">{{ summary.pending }}</p>
+        <p class="metric-meta">Waiting to be started.</p>
+    </article>
+    <article class="metric-card metric-card-ink surface-card">
+        <p class="metric-label">In Progress</p>
+        <p class="metric-value">{{ summary.in_progress }}</p>
+        <p class="metric-meta">Currently being worked on.</p>
+    </article>
+    <article class="metric-card metric-card-success surface-card">
+        <p class="metric-label">Completed</p>
+        <p class="metric-value">{{ summary.completed }}</p>
+        <p class="metric-meta">Finished and ready to archive mentally.</p>
+    </article>
+</section>
+
+<section class="surface-card filter-card">
+    <form method="get" action="{% url 'task_list' %}" class="filter-grid">
+        <div>
+            <label class="form-caption" for="searchTask">Search tasks</label>
+            <input
+                id="searchTask"
+                type="text"
+                name="q"
+                class="form-control form-control-lg"
+                placeholder="Search by title"
+                value="{{ active_filters.q }}"
+            >
+        </div>
+        <div>
+            <label class="form-caption" for="statusFilter">Status</label>
+            <select id="statusFilter" name="status" class="form-select form-select-lg">
+                <option value="">All statuses</option>
+                {% for status in status_options %}
+                    <option value="{{ status }}" {% if active_filters.status == status %}selected{% endif %}>
+                        {{ status }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="page-actions">
+            <button type="submit" class="btn btn-primary-soft">Apply Filters</button>
+            {% if active_filters.q or active_filters.status %}
+                <a href="{% url 'task_list' %}" class="btn btn-soft">Reset</a>
+            {% endif %}
+        </div>
+    </form>
+</section>
+
+{% if tasks.object_list %}
+    <section class="task-grid">
+        {% for task in tasks %}
+            <article class="surface-card task-card">
+                <div class="task-card-top">
+                    <div>
+                        <h3 class="task-card-title">{{ task.title }}</h3>
+                        <p class="task-card-description mt-2">{{ task.description|default:"No description added yet."|truncatechars:150 }}</p>
+                    </div>
+                    <span class="priority-pill {% if task.is_priority_alert %}priority-alert{% else %}priority-normal{% endif %}">
+                        {{ task.priority.name|title }}
+                    </span>
+                </div>
+
+                <div class="task-card-meta">
+                    <span class="status-pill {% if task.status == 'Completed' %}status-complete{% elif task.status == 'In Progress' %}status-progress{% else %}status-pending{% endif %}">
+                        {{ task.status }}
+                    </span>
+                    <span class="meta-pill">{{ task.category.name }}</span>
+                    <span class="meta-pill">
+                        {% if task.deadline %}
+                            {{ task.deadline|date:"M d, Y" }}
+                        {% else %}
+                            No deadline
+                        {% endif %}
+                    </span>
+                    <span class="meta-pill">{{ task.subtasks.count }} subtasks</span>
+                    <span class="meta-pill">{{ task.notes.count }} notes</span>
+                </div>
+
+                {% if task.preview_notes %}
+                    <div class="note-preview">
+                        {% for note in task.preview_notes %}
+                            <div class="note-preview-item">{{ note.content|truncatechars:95 }}</div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="note-preview-item">No notes added for this task yet.</div>
+                {% endif %}
+
+                <div class="task-card-actions">
+                    <form action="{% url 'complete_task' task.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-soft btn-success-soft w-100" {% if task.status == 'Completed' %}disabled{% endif %}>
+                            {% if task.status == 'Completed' %}Completed{% else %}Mark Complete{% endif %}
+                        </button>
+                    </form>
+
+                    <button
+                        type="button"
+                        class="btn btn-outline-soft btn-danger-soft"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteModal"
+                        data-delete-url="{% url 'delete_task' task.id %}"
+                        data-task-title="{{ task.title }}"
+                    >
+                        Delete
+                    </button>
+                </div>
+            </article>
+        {% endfor %}
+    </section>
+
+    <nav class="pagination-wrap" aria-label="Task pagination">
+        <ul class="pagination justify-content-center mb-0">
+            <li class="page-item {% if not tasks.has_previous %}disabled{% endif %}">
+                {% if tasks.has_previous %}
+                    <a class="page-link" href="?page={{ tasks.previous_page_number }}&status={{ active_filters.status }}&q={{ active_filters.q }}">Previous</a>
+                {% else %}
+                    <span class="page-link">Previous</span>
+                {% endif %}
+            </li>
+
+            {% for num in tasks.paginator.page_range %}
+                {% if num == tasks.number %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > tasks.number|add:'-3' and num < tasks.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}&status={{ active_filters.status }}&q={{ active_filters.q }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            <li class="page-item {% if not tasks.has_next %}disabled{% endif %}">
+                {% if tasks.has_next %}
+                    <a class="page-link" href="?page={{ tasks.next_page_number }}&status={{ active_filters.status }}&q={{ active_filters.q }}">Next</a>
+                {% else %}
+                    <span class="page-link">Next</span>
+                {% endif %}
+            </li>
+        </ul>
+    </nav>
+{% else %}
+    <section class="surface-card empty-state">
+        <h3>No tasks matched your filters</h3>
+        <p>Try clearing the filters or create a new task to start filling your workspace.</p>
+    </section>
+{% endif %}
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body p-4">
+                <p class="page-kicker mb-2">Confirm Action</p>
+                <h3 class="panel-title mb-2">Delete Task</h3>
+                <p class="panel-subtitle mb-4">
+                    This will permanently remove <span id="deleteTaskTitle" class="fw-semibold text-dark"></span> from your workspace.
+                </p>
+                <form id="deleteTaskForm" method="post" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-soft flex-fill" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary-soft flex-fill">Delete Task</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            const trigger = event.relatedTarget;
+            document.getElementById('deleteTaskForm').action = trigger.getAttribute('data-delete-url');
+            document.getElementById('deleteTaskTitle').textContent = `"${trigger.getAttribute('data-task-title')}"`;
+        });
+    }
+</script>
+{% endblock %}

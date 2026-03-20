@@ -1,0 +1,8 @@
+venv/
+.venv/
+Hangad/
+db.sqlite3
+__pycache__/
+*.pyc
+.env
+staticfiles/

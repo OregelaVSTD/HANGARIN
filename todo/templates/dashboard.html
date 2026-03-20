@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-page">
+<section class="page-header dashboard-hero surface-card">
+    <div>
+        <p class="page-kicker">Overview</p>
+        <h2>Dashboard</h2>
+        <p class="page-subtitle">
+            Track progress, watch deadlines, and keep priority work visible without leaving the same workspace style as your task board.
+        </p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'task_list' %}" class="btn btn-soft">View Tasks</a>
+        <a href="{% url 'create_task' %}" class="btn btn-primary-soft">Create Task</a>
+    </div>
+</section>
+
+<section class="metrics-grid">
+    <article class="metric-card metric-card-primary surface-card">
+        <p class="metric-label">Total Tasks</p>
+        <p class="metric-value">{{ total }}</p>
+        <p class="metric-meta">Everything currently assigned to you.</p>
+    </article>
+    <article class="metric-card metric-card-success surface-card">
+        <p class="metric-label">Completed</p>
+        <p class="metric-value">{{ completed }}</p>
+        <p class="metric-meta">{{ completion_rate }}% completion rate.</p>
+    </article>
+    <article class="metric-card metric-card-warning surface-card">
+        <p class="metric-label">In Progress</p>
+        <p class="metric-value">{{ in_progress }}</p>
+        <p class="metric-meta">Work that is already moving.</p>
+    </article>
+    <article class="metric-card metric-card-ink surface-card">
+        <p class="metric-label">Pending</p>
+        <p class="metric-value">{{ pending }}</p>
+        <p class="metric-meta">{{ overdue }} overdue, {{ due_today }} due today.</p>
+    </article>
+</section>
+
+<section class="dashboard-grid mb-4">
+    <article class="surface-card panel-card">
+        <h3 class="panel-title">Productivity Snapshot</h3>
+        <p class="panel-subtitle">A quick view of completion and deadline pressure.</p>
+
+        <div class="d-flex justify-content-between align-items-center mb-2 gap-3">
+            <strong>Completion progress</strong>
+            <span class="fw-semibold">{{ completion_rate }}%</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-value" style="width: {{ completion_rate }}%;"></div>
+        </div>
+
+        <div class="mini-stats">
+            <div class="mini-stat">
+                <p class="mini-stat-label">Due Today</p>
+                <p class="mini-stat-value">{{ due_today }}</p>
+            </div>
+            <div class="mini-stat">
+                <p class="mini-stat-label">Overdue</p>
+                <p class="mini-stat-value">{{ overdue }}</p>
+            </div>
+            <div class="mini-stat">
+                <p class="mini-stat-label">Open Work</p>
+                <p class="mini-stat-value">{{ pending|add:in_progress }}</p>
+            </div>
+        </div>
+    </article>
+
+    <article class="surface-card panel-card">
+        <h3 class="panel-title">Priority Focus</h3>
+        <p class="panel-subtitle">High and critical items that need attention first.</p>
+
+        <div class="list-card">
+            {% for task in urgent %}
+                <div class="task-item">
+                    <div class="task-item-header">
+                        <div>
+                            <p class="task-item-title">{{ task.title }}</p>
+                            <p class="task-item-meta">{{ task.category.name }} | {{ task.priority.name|title }}</p>
+                        </div>
+                        <span class="status-pill {% if task.status == 'Completed' %}status-complete{% elif task.status == 'In Progress' %}status-progress{% else %}status-pending{% endif %}">
+                            {{ task.status }}
+                        </span>
+                    </div>
+                    <p class="task-item-footnote">
+                        {% if task.deadline %}
+                            Deadline: {{ task.deadline|date:"M d, Y | h:i A" }}
+                        {% else %}
+                            No deadline set
+                        {% endif %}
+                    </p>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <h3>No urgent tasks</h3>
+                    <p>Your highest priority work is under control right now.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<section class="content-grid">
+    <div class="stack-grid">
+        <article class="surface-card panel-card">
+            <h3 class="panel-title">Upcoming Deadlines</h3>
+            <p class="panel-subtitle">The next tasks that are due soon.</p>
+
+            <div class="list-card">
+                {% for task in upcoming %}
+                    <div class="task-item">
+                        <div class="task-item-header">
+                            <div>
+                                <p class="task-item-title">{{ task.title }}</p>
+                                <p class="task-item-meta">{{ task.category.name }} | {{ task.priority.name|title }}</p>
+                            </div>
+                            <span class="priority-pill {% if task.is_priority_alert %}priority-alert{% else %}priority-normal{% endif %}">
+                                {{ task.priority.name|title }}
+                            </span>
+                        </div>
+                        <p class="task-item-footnote">
+                            Due {{ task.deadline|date:"M d, Y | h:i A" }}
+                        </p>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <h3>No deadlines scheduled</h3>
+                        <p>Add due dates to make the dashboard more useful for planning.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="surface-card panel-card">
+            <h3 class="panel-title">Recent Notes</h3>
+            <p class="panel-subtitle">Latest context added to your tasks.</p>
+
+            <div class="list-card">
+                {% for note in recent_notes %}
+                    <div class="note-item">
+                        <p class="task-item-title">{{ note.task.title }}</p>
+                        <p class="note-item-meta mt-1">{{ note.content|truncatechars:140 }}</p>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <h3>No notes yet</h3>
+                        <p>Task notes will appear here once you start documenting details.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </article>
+    </div>
+
+    <div class="stack-grid">
+        <article class="surface-card panel-card">
+            <h3 class="panel-title">Category Overview</h3>
+            <p class="panel-subtitle">Where most of your work is currently grouped.</p>
+
+            <div class="category-bars">
+                {% for item in category_breakdown %}
+                    <div class="category-bar-row">
+                        <div class="category-bar-head">
+                            <span>{{ item.label }}</span>
+                            <span>{{ item.total }}</span>
+                        </div>
+                        <div class="category-bar-track">
+                            <div class="category-bar-fill" style="width: {{ item.percentage }}%;"></div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <h3>No category data</h3>
+                        <p>Create a few tasks to build your workload distribution.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="surface-card panel-card">
+            <h3 class="panel-title">Recently Added Tasks</h3>
+            <p class="panel-subtitle">The newest items that entered your workflow.</p>
+
+            <div class="list-card">
+                {% for task in recent_tasks %}
+                    <div class="task-item">
+                        <div class="task-item-header">
+                            <div>
+                                <p class="task-item-title">{{ task.title }}</p>
+                                <p class="task-item-meta">{{ task.category.name }} | {{ task.priority.name|title }}</p>
+                            </div>
+                            <span class="status-pill {% if task.status == 'Completed' %}status-complete{% elif task.status == 'In Progress' %}status-progress{% else %}status-pending{% endif %}">
+                                {{ task.status }}
+                            </span>
+                        </div>
+                        <p class="task-item-footnote">Created {{ task.created_at|date:"M d, Y" }}</p>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <h3>No tasks yet</h3>
+                        <p>Create your first task to populate the dashboard.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </article>
+    </div>
+</section>
+</div>
+{% endblock %}
