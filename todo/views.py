@@ -68,7 +68,9 @@ def task_list(request):
     status_filter = request.GET.get("status", "").strip()
 
     if search_query:
-        filtered_tasks = filtered_tasks.filter(title__icontains=search_query)
+        filtered_tasks = filtered_tasks.filter(
+            Q(title__icontains=search_query) | Q(description__icontains=search_query)
+        )
     if status_filter:
         filtered_tasks = filtered_tasks.filter(status=status_filter)
 
@@ -132,7 +134,12 @@ def delete_task(request, pk):
 
 @login_required
 def subtask_list(request):
-    subtasks = SubTask.objects.filter(parent_task__user=request.user).order_by("-created_at")
+    q = request.GET.get("q")
+    subtasks = SubTask.objects.filter(parent_task__user=request.user)
+    if q:
+        subtasks = subtasks.filter(title__icontains=q)
+    subtasks = subtasks.order_by("-created_at")
+    
     paginator = Paginator(subtasks, 10)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
@@ -177,7 +184,11 @@ def subtask_edit(request, pk):
 
 @login_required
 def category_list(request):
-    categories = Category.objects.annotate(task_count=Count('tasks', filter=Q(tasks__user=request.user))).order_by('name')
+    q = request.GET.get("q")
+    categories = Category.objects.annotate(task_count=Count('tasks', filter=Q(tasks__user=request.user)))
+    if q:
+        categories = categories.filter(name__icontains=q)
+    categories = categories.order_by('name')
     return render(request, "tasks/category_list.html", {"categories": categories})
 
 
@@ -212,7 +223,11 @@ def category_edit(request, pk):
 
 @login_required
 def priority_list(request):
-    priorities = Priority.objects.annotate(task_count=Count('tasks', filter=Q(tasks__user=request.user))).order_by('name')
+    q = request.GET.get("q")
+    priorities = Priority.objects.annotate(task_count=Count('tasks', filter=Q(tasks__user=request.user)))
+    if q:
+        priorities = priorities.filter(name__icontains=q)
+    priorities = priorities.order_by('name')
     return render(request, "tasks/priority_list.html", {"priorities": priorities})
 
 
@@ -247,7 +262,12 @@ def priority_edit(request, pk):
 
 @login_required
 def note_list(request):
-    notes = Note.objects.filter(task__user=request.user).order_by("-created_at")
+    q = request.GET.get("q")
+    notes = Note.objects.filter(task__user=request.user)
+    if q:
+        notes = notes.filter(content__icontains=q)
+    notes = notes.order_by("-created_at")
+    
     paginator = Paginator(notes, 10)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
@@ -291,7 +311,11 @@ def note_edit(request, pk):
 
 @login_required
 def dashboard(request):
+    q = request.GET.get("q")
     all_tasks = _task_queryset(request.user)
+    if q:
+        all_tasks = all_tasks.filter(Q(title__icontains=q) | Q(description__icontains=q))
+    
     today = timezone.localdate()
     total = all_tasks.count()
     completed = all_tasks.filter(status=STATUS_COMPLETED).count()

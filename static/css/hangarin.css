@@ -160,11 +160,63 @@ body {
     flex: 1;
     min-width: 0;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-topbar {
+    height: 72px;
+    padding: 0 34px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.search-form {
+    flex: 1;
+    max-width: 500px;
+}
+
+.search-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input-group .material-symbols-rounded {
+    position: absolute;
+    left: 16px;
+    color: var(--text-soft);
+    pointer-events: none;
+    font-size: 20px;
+}
+
+.search-input-group .form-control {
+    padding-left: 50px;
+    height: 46px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--line);
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.search-input-group .form-control:focus {
+    background: #fff;
+    border-color: var(--brand-500);
+    box-shadow: 0 4px 20px rgba(119, 170, 242, 0.12);
 }
 
 .page-shell {
     max-width: 1360px;
     padding: 34px;
+    flex: 1;
 }
 
 .message-stack {

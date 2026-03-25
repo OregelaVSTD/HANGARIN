@@ -73,6 +73,15 @@
         </aside>
 
         <main class="app-main">
+            <header class="app-topbar">
+                <form action="{{ request.path }}" method="get" class="search-form">
+                    <div class="search-input-group">
+                        <span class="material-symbols-rounded">search</span>
+                        <input type="text" name="q" class="form-control" placeholder="Search your workspace..." value="{{ request.GET.q|default:'' }}">
+                    </div>
+                </form>
+            </header>
+
             <div class="page-shell">
                 {% if messages %}
                     <div class="message-stack">
