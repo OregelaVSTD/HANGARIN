@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="page-kicker">Prioritize</p>
+        <h1>Priorities</h1>
+        <p class="page-subtitle">Defining the urgency and importance of your work.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'priority_create' %}" class="btn btn-primary-soft">Add Priority</a>
+    </div>
+</div>
+
+<div class="surface-card panel-card">
+    <div class="row g-4">
+        {% for priority in priorities %}
+        <div class="col-md-4">
+            <div class="mini-stat">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="material-symbols-rounded text-warning">flag</span>
+                    <a href="{% url 'priority_edit' priority.pk %}" class="btn btn-sm btn-soft">Edit</a>
+                </div>
+                <h3 class="panel-title">{{ priority.name }}</h3>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <p class="text-soft mb-0">Tasks with this priority</p>
+                    <span class="status-pill status-pending">{{ priority.task_count }}</span>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <p class="text-soft">No priorities defined yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

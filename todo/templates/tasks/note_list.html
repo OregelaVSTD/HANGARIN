@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="page-kicker">Context</p>
+        <h1>Notes</h1>
+        <p class="page-subtitle">Quick reminders and additional details attached to your tasks.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'note_create' %}" class="btn btn-primary-soft">Add Note</a>
+    </div>
+</div>
+
+<div class="surface-card panel-card">
+    <div class="row g-4">
+        {% for note in page_obj %}
+        <div class="col-md-6">
+            <div class="note-item h-100 position-relative">
+                <div class="task-item-header">
+                    <span class="material-symbols-rounded text-soft">sticky_note_2</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="task-item-meta">{{ note.created_at|date:"M d, Y" }}</span>
+                        <a href="{% url 'note_edit' note.pk %}" class="text-primary text-decoration-none fw-bold">Edit</a>
+                    </div>
+                </div>
+                <p class="mb-3">{{ note.content }}</p>
+                <div class="task-item-footnote">
+                    Attached to: <strong>{{ note.task.title }}</strong>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <p class="text-soft">No notes recorded yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="pagination-wrap mt-4">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% endif %}
+                
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+
+                {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

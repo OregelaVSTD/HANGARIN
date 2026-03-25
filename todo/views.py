@@ -8,8 +8,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .forms import TaskForm
-from .models import Note, Task
+from .forms import CategoryForm, NoteForm, PriorityForm, SubTaskForm, TaskForm
+from .models import Category, Note, Priority, SubTask, Task
 from .services import ensure_starter_tasks
 
 
@@ -128,6 +128,165 @@ def delete_task(request, pk):
     task.delete()
     messages.success(request, f'"{task_title}" deleted.')
     return redirect("task_list")
+
+
+@login_required
+def subtask_list(request):
+    subtasks = SubTask.objects.filter(parent_task__user=request.user).order_by("-created_at")
+    paginator = Paginator(subtasks, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    return render(request, "tasks/subtask_list.html", {"page_obj": page_obj})
+
+
+@login_required
+def subtask_create(request):
+    if request.method == "POST":
+        form = SubTaskForm(request.POST)
+        if form.is_valid():
+            subtask = form.save(commit=False)
+            if subtask.parent_task.user == request.user:
+                subtask.save()
+                messages.success(request, "Sub task created successfully.")
+                return redirect("subtask_list")
+            else:
+                messages.error(request, "Unauthorized action.")
+    else:
+        form = SubTaskForm()
+        # Limit parent_task choices to user's tasks
+        form.fields["parent_task"].queryset = Task.objects.filter(user=request.user)
+    
+    return render(request, "tasks/form.html", {"form": form, "title": "Create Sub Task", "kicker": "Sub Tasks"})
+
+
+@login_required
+def subtask_edit(request, pk):
+    subtask = get_object_or_404(SubTask, pk=pk, parent_task__user=request.user)
+    if request.method == "POST":
+        form = SubTaskForm(request.POST, instance=subtask)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Sub task updated successfully.")
+            return redirect("subtask_list")
+    else:
+        form = SubTaskForm(instance=subtask)
+        form.fields["parent_task"].queryset = Task.objects.filter(user=request.user)
+    
+    return render(request, "tasks/form.html", {"form": form, "title": "Edit Sub Task", "kicker": "Sub Tasks"})
+
+
+@login_required
+def category_list(request):
+    categories = Category.objects.annotate(task_count=Count('tasks', filter=Q(tasks__user=request.user))).order_by('name')
+    return render(request, "tasks/category_list.html", {"categories": categories})
+
+
+@login_required
+def category_create(request):
+    if request.method == "POST":
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Category created successfully.")
+            return redirect("category_list")
+    else:
+        form = CategoryForm()
+    
+    return render(request, "tasks/form.html", {"form": form, "title": "Create Category", "kicker": "Categories"})
+
+
+@login_required
+def category_edit(request, pk):
+    category = get_object_or_404(Category, pk=pk)
+    if request.method == "POST":
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Category updated successfully.")
+            return redirect("category_list")
+    else:
+        form = CategoryForm(instance=category)
+    
+    return render(request, "tasks/form.html", {"form": form, "title": "Edit Category", "kicker": "Categories"})
+
+
+@login_required
+def priority_list(request):
+    priorities = Priority.objects.annotate(task_count=Count('tasks', filter=Q(tasks__user=request.user))).order_by('name')
+    return render(request, "tasks/priority_list.html", {"priorities": priorities})
+
+
+@login_required
+def priority_create(request):
+    if request.method == "POST":
+        form = PriorityForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Priority created successfully.")
+            return redirect("priority_list")
+    else:
+        form = PriorityForm()
+    
+    return render(request, "tasks/form.html", {"form": form, "title": "Create Priority", "kicker": "Priorities"})
+
+
+@login_required
+def priority_edit(request, pk):
+    priority = get_object_or_404(Priority, pk=pk)
+    if request.method == "POST":
+        form = PriorityForm(request.POST, instance=priority)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Priority updated successfully.")
+            return redirect("priority_list")
+    else:
+        form = PriorityForm(instance=priority)
+    
+    return render(request, "tasks/form.html", {"form": form, "title": "Edit Priority", "kicker": "Priorities"})
+
+
+@login_required
+def note_list(request):
+    notes = Note.objects.filter(task__user=request.user).order_by("-created_at")
+    paginator = Paginator(notes, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    return render(request, "tasks/note_list.html", {"page_obj": page_obj})
+
+
+@login_required
+def note_create(request):
+    if request.method == "POST":
+        form = NoteForm(request.POST)
+        if form.is_valid():
+            note = form.save(commit=False)
+            if note.task.user == request.user:
+                note.save()
+                messages.success(request, "Note created successfully.")
+                return redirect("note_list")
+            else:
+                messages.error(request, "Unauthorized action.")
+    else:
+        form = NoteForm()
+        form.fields["task"].queryset = Task.objects.filter(user=request.user)
+    
+    return render(request, "tasks/form.html", {"form": form, "title": "Create Note", "kicker": "Notes"})
+
+
+@login_required
+def note_edit(request, pk):
+    note = get_object_or_404(Note, pk=pk, task__user=request.user)
+    if request.method == "POST":
+        form = NoteForm(request.POST, instance=note)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Note updated successfully.")
+            return redirect("note_list")
+    else:
+        form = NoteForm(instance=note)
+        form.fields["task"].queryset = Task.objects.filter(user=request.user)
+    
+    return render(request, "tasks/form.html", {"form": form, "title": "Edit Note", "kicker": "Notes"})
 
 
 @login_required

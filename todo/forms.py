@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Category, Note, Priority, Task
+from .models import Category, Note, Priority, SubTask, Task
 
 
 class TaskForm(forms.ModelForm):
@@ -52,8 +52,52 @@ class NoteForm(forms.ModelForm):
                 attrs={
                     "placeholder": "Enter your note here...",
                     "rows": 3,
-                    "class": "form-control",
                 }
             ),
-            "task": forms.Select(attrs={"class": "form-select"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.Select):
+                css_class = "form-select form-select-lg"
+            elif isinstance(field.widget, forms.Textarea):
+                css_class = "form-control form-control-lg task-textarea"
+            else:
+                css_class = "form-control form-control-lg"
+            field.widget.attrs["class"] = css_class
+
+
+class SubTaskForm(forms.ModelForm):
+    class Meta:
+        model = SubTask
+        fields = ["parent_task", "title", "status"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.Select):
+                css_class = "form-select form-select-lg"
+            else:
+                css_class = "form-control form-control-lg"
+            field.widget.attrs["class"] = css_class
+
+
+class CategoryForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ["name"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["name"].widget.attrs["class"] = "form-control form-control-lg"
+
+
+class PriorityForm(forms.ModelForm):
+    class Meta:
+        model = Priority
+        fields = ["name"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["name"].widget.attrs["class"] = "form-control form-control-lg"
