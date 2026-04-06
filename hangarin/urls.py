@@ -10,4 +10,5 @@ urlpatterns = [
     path('login/', HangarinLoginView.as_view(), name='login'),
     path('accounts/', include('allauth.urls')),
     path('', include('todo.urls')),
+    path('', include('pwa.urls')),
 ]
