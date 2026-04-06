@@ -11,8 +11,8 @@ from todo.models import Category, Note, Priority, SubTask, Task
 
 DEFAULT_PRIORITIES = ("high", "medium", "low", "critical", "optional")
 DEFAULT_CATEGORIES = ("Work", "School", "Personal", "Finance", "Projects")
-DEFAULT_DEMO_USERNAME = "hangarin_demo"
-DEFAULT_DEMO_PASSWORD = "hangarin123"
+DEFAULT_DEMO_USERNAME = "sunny"
+DEFAULT_DEMO_PASSWORD = "sunny12345"
 
 
 class Command(BaseCommand):

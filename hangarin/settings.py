@@ -273,4 +273,4 @@ PWA_APP_ICONS_APPLE = [
     } 
 ] 
 PWA_APP_DIR = 'ltr' 
-PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, 'static/js', 'serviceworker.js')
+PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, 'hangarin', 'serviceworker.js')

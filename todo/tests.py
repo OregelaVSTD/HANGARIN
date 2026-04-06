@@ -19,7 +19,7 @@ class SeedHangarinCommandTests(TestCase):
         self.assertEqual(Category.objects.count(), 5)
         self.assertEqual(Priority.objects.count(), 5)
         self.assertTrue(
-            get_user_model().objects.filter(username="hangarin_demo").exists()
+            get_user_model().objects.filter(username="sunny").exists()
         )
         self.assertEqual(Task.objects.count(), 3)
         self.assertGreaterEqual(SubTask.objects.count(), 6)
