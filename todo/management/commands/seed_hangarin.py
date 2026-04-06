@@ -50,35 +50,22 @@ class Command(BaseCommand):
     def _resolve_users(self, username):
         user_model = get_user_model()
 
-        if username:
-            user = user_model.objects.filter(username=username).first()
-            if user is None:
-                user = user_model.objects.create_user(
-                    username=username,
-                    password=DEFAULT_DEMO_PASSWORD,
-                )
-                self.stdout.write(
-                    self.style.WARNING(
-                        f"Created user '{username}' with password '{DEFAULT_DEMO_PASSWORD}'."
-                    )
-                )
-            return [user]
-
-        users = list(user_model.objects.all())
-        if users:
-            return users
-
-        demo_user = user_model.objects.create_user(
-            username=DEFAULT_DEMO_USERNAME,
-            password=DEFAULT_DEMO_PASSWORD,
-        )
-        self.stdout.write(
-            self.style.WARNING(
-                "No users were found. "
-                f"Created '{DEFAULT_DEMO_USERNAME}' with password '{DEFAULT_DEMO_PASSWORD}'."
+        # Fallback just in case an empty string is explicitly passed
+        if not username:
+            username = DEFAULT_DEMO_USERNAME
+            
+        user = user_model.objects.filter(username=username).first()
+        if user is None:
+            user = user_model.objects.create_user(
+                username=username,
+                password=DEFAULT_DEMO_PASSWORD,
             )
-        )
-        return [demo_user]
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Created user '{username}' with password '{DEFAULT_DEMO_PASSWORD}'."
+                )
+            )
+        return [user]
 
     @transaction.atomic
     def handle(self, *args, **options):
