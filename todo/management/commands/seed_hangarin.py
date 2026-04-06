@@ -31,7 +31,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--username",
             type=str,
-            default="",
+            default=DEFAULT_DEMO_USERNAME,
             help=(
                 "Assign all generated tasks to a specific username. "
                 "If the user does not exist, the command will create it."
